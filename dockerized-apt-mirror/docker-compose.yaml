@@ -1,0 +1,32 @@
+version: '3'
+services:
+  apt-mirror-nginx:
+    image: nginx:1.15.8-alpine
+    volumes:
+      - ./nginx:/etc/nginx
+      - ./nginx/logs:/var/log
+      - ./nginx/static:/usr/share/nginx/html
+      - ./apt-mirror-volume/mirror:/apt-mirror
+    ports:
+      - 80:80
+    environment:
+      - NGINX_PORT=80
+    depends_on:
+      - apt-mirror-ubuntu-server
+    networks:
+      - apt-mirror-network
+  apt-mirror-ubuntu-server:
+    image: kycfeel/dockerized-apt-mirror
+    build:
+     context: .
+     dockerfile: Dockerfile
+    volumes:
+      - ./apt-mirror-volume:/var/spool/apt-mirror
+      - ./postmirror.sh:/var/spool/apt-mirror/var/postmirror.sh
+      - ./mirror.list:/etc/apt/mirror.list
+      - ./crontab:/etc/cron.d
+    networks:
+      - apt-mirror-network
+
+networks:
+  apt-mirror-network:
